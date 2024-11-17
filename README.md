@@ -1,4 +1,5 @@
-![CommandLineIcon](https://github.com/user-attachments/assets/7f36f7cf-17fb-4c92-8a09-b4723f5bd3fe)
+
+![adasdasdadasd](https://github.com/user-attachments/assets/67cd48b5-4acd-418b-b473-ec88f75c2e6d)
 
 Windows işletim sistemi için yazılmış .bat dosyaları hakkında kısa bir bilgi vermek gerekirse. Bu dosyalar, bir dizi komutu sırasıyla çalıştırarak belirli görevleri otomatikleştirmemizi sağlar. Windows komut isteminde (Command Prompt) çalıştırılabilir ve genellikle sistem yönetimi, dosya yönetimi, yazılım kurulumu ve bakım gibi işlemleri kolaylaştırmak için kullanılır.
 
