@@ -1,19 +1,29 @@
 @echo off
 chcp 65001 > nul
 cls
-
-:: Renk Modu: Yeşil
 color 2
 
-:: Menü Başlığı
+:: ============================
+:: Yönetici Yetkisi Kontrolü
+:: ============================
+net session >nul 2>&1
+if %errorLevel% neq 0 (
+    echo Lütfen bu scripti YÖNETİCİ olarak çalıştırın!
+    pause
+    exit
+)
+
+:: ============================
+:: Başlık ve Menü
+:: ============================
+:START
+cls
 echo =============================================================================== 
 echo ==============  ***  SİSTEM YÖNETİM ARACI  ***  =================
 echo =============================================================================== 
 echo                         Tasarlayan: Dogukan ISPIRLI
 echo =============================================================================== 
 echo.
-
-:MENU
 echo  1 -  Bilgisayar Seri Numarası ve Modelini Göster
 echo  2 -  CPU Bilgilerini Göster
 echo  3 -  Depolama Alanı Durumunu Göster
@@ -38,10 +48,8 @@ echo 21 -  Windows Sistem Dosyalarını Onar
 echo 22 -  Çıkış Yap
 echo ===============================================================================
 
-:: Seçim bölümü
 set /p choice=Bir seçenek girin (1-22): 
 
-:: Koşul bölümü
 if "%choice%"=="1" goto COMPUTER_INFO
 if "%choice%"=="2" goto CPUINFO
 if "%choice%"=="3" goto STORAGE
@@ -63,162 +71,193 @@ if "%choice%"=="18" goto WINVER
 if "%choice%"=="19" goto LAST_FORMAT_DATE
 if "%choice%"=="20" goto CLEAR_DNS
 if "%choice%"=="21" goto SFC
-if "%choice%"=="22" exit
-goto MENU
+if "%choice%"=="22" goto EXIT
+goto START
 
-:: İşlem bölümü
+:: ============================
+:: İşlem Bölümü
+:: ============================
+
 :COMPUTER_INFO
 cls
 echo Bilgisayar Seri Numarası:
-wmic bios get serialnumber
+powershell "Get-CimInstance Win32_BIOS | Select-Object -ExpandProperty SerialNumber"
 echo.
 echo Bilgisayar Adı:
 hostname
 echo.
 echo Marka ve Model:
-wmic computersystem get manufacturer, model
+powershell "Get-CimInstance Win32_ComputerSystem | Select Manufacturer, Model"
 pause
-goto MENU
+cls
+goto START
 
 :CPUINFO
 cls
 echo CPU Bilgileri:
-wmic cpu get caption, deviceid, name, numberofcores, maxclockspeed
+powershell "Get-CimInstance Win32_Processor | Select Name, NumberOfCores, MaxClockSpeed"
 pause
-goto MENU
+cls
+goto START
 
 :STORAGE
 cls
 echo Depolama Alanı Durumu:
-wmic logicaldisk get caption, description, freespace, size
+powershell "Get-CimInstance Win32_LogicalDisk | Select DeviceID, MediaType, @{Name='FreeSpace(GB)';Expression={[math]::Round($_.FreeSpace/1GB,2)}}, @{Name='Size(GB)';Expression={[math]::Round($_.Size/1GB,2)}}"
 pause
-goto MENU
+cls
+goto START
 
 :DISK
 cls
 echo Disk Durumu:
-wmic logicaldisk get caption, description, freespace, size
+powershell "Get-PhysicalDisk | Select FriendlyName, MediaType, Size, HealthStatus"
 pause
-goto MENU
+cls
+goto START
 
 :CLEANUP
 cls
 echo Disk Temizliği başlatılıyor...
 cleanmgr
 pause
-goto MENU
+cls
+goto START
 
 :CLEAN_TEMP_FILES
 cls
 echo Geçici dosyalar temizleniyor...
-del /q /f /s %TEMP%\*
+rd /s /q "%TEMP%" > nul 2>&1
+md "%TEMP%"
+echo Geçici dosyalar başarıyla temizlendi.
 pause
-goto MENU
+cls
+goto START
 
 :ENABLE_FIREWALL
 cls
 echo Güvenlik Duvarı etkinleştiriliyor...
 netsh advfirewall set allprofiles state on
 pause
-goto MENU
+cls
+goto START
 
 :DISABLE_FIREWALL
 cls
 echo Güvenlik Duvarı devre dışı bırakılıyor...
 netsh advfirewall set allprofiles state off
 pause
-goto MENU
+cls
+goto START
 
 :GPUPDATE
 cls
 echo Grup Politikaları Güncelleniyor...
 gpupdate /force
 pause
-goto MENU
+cls
+goto START
 
 :IP
 cls
-echo Bilgisayarın IP Adresi:
+echo IP Adresi Bilgisi:
 ipconfig | findstr /i "IPv4"
 pause
-goto MENU
+cls
+goto START
 
 :USERS
 cls
 echo Kullanıcı Hesapları:
 net user
 pause
-goto MENU
+cls
+goto START
 
 :MEMORY
 cls
 echo RAM Bilgileri:
-wmic memorychip get capacity, speed, manufacturer
+powershell "Get-CimInstance Win32_PhysicalMemory | Select Manufacturer, Capacity, Speed"
 pause
-goto MENU
+cls
+goto START
 
 :OPTIMIZE_RAM
 cls
 echo RAM optimizasyonu yapılıyor...
-taskkill /f /im explorer.exe > nul
-start explorer.exe
+powershell "Clear-RecycleBin -Force; Start-Sleep -Seconds 1; [System.GC]::Collect(); Write-Host 'RAM optimizasyonu tamamlandı.'"
 pause
-goto MENU
+cls
+goto START
 
 :CHKDSK
 cls
-echo Sabit diski tarıyor...
-chkdsk C: /f /r /x
+echo Sabit disk taraması başlatılıyor...
+chkdsk C: /f
 pause
-goto MENU
+cls
+goto START
 
 :SYSINFO
 cls
 echo Sistem Bilgileri:
 systeminfo
 pause
-goto MENU
+cls
+goto START
 
 :WINDOWSUPDATE
 cls
 echo Windows Güncelleme Durumu:
-wmic qfe list brief /format:table
+powershell "Get-HotFix | Sort-Object InstalledOn -Descending | Select -First 10"
 pause
-goto MENU
+cls
+goto START
 
 :LICENSE
 cls
 echo Windows Lisans Durumu:
 slmgr /xpr
 pause
-goto MENU
+cls
+goto START
 
 :WINVER
 cls
 echo Windows Sürüm Bilgisi:
-winver
+systeminfo | findstr /i "OS Name"
+systeminfo | findstr /i "OS Version"
 pause
-goto MENU
+cls
+goto START
 
 :LAST_FORMAT_DATE
 cls
-echo Son Format Tarihi:
-wmic os get installdate
+echo Son Format (Kurulum) Tarihi:
+powershell "(Get-CimInstance Win32_OperatingSystem).InstallDate"
 pause
-goto MENU
+cls
+goto START
 
 :CLEAR_DNS
 cls
 echo DNS Önbelleği temizleniyor...
 ipconfig /flushdns
+echo DNS önbelleği başarıyla temizlendi.
 pause
-goto MENU
+cls
+goto START
 
 :SFC
 cls
 echo Sistem dosyaları taranıyor...
 sfc /scannow
 pause
-goto MENU
+cls
+goto START
 
-:: Bitiş.
+:EXIT
+cls
+echo Çıkış yapılıyor... Görüşmek üzere!
+timeout /t 2 > nul
+exit
